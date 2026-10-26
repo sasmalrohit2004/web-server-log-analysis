@@ -11,3 +11,16 @@ build/
 .DS_Store
 Thumbs.db
 dataset/
+
+# Python and Streamlit
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.streamlit/secrets.toml
+
+# Environment variables and credentials
+.env
+.env.*
+!.env.example
+.aws/
