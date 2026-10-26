@@ -1,54 +1,7 @@
 # Web Server Log Analysis Using Hadoop
 
-A Big Data project that analyzes web server access logs using **Apache Hadoop MapReduce and Java**. The project processes HTTP access logs to identify request methods, requested resources, and HTTP status codes. It also generates visualizations of the analysis results and supports processing input files stored in Amazon S3.
+A Big Data project that analyzes web server access logs using **Apache Hadoop MapReduce and Java**. The project processes HTTP access logs to identify request methods, requested resources, and HTTP status codes. It includes a running **Streamlit interactive dashboard** built with Pandas and Plotly, and supports processing input files stored in Amazon S3.
 
-## Table of Contents
-
-1. [Project Overview](#1-project-overview)
-
-2. [Project Objectives](#2-project-objectives)
-
-3. [Technologies Used](#3-technologies-used)
-
-4. [System Requirements](#4-system-requirements)
-
-5. [Project Structure](#5-project-structure)
-
-6. [How the Project Works](#6-how-the-project-works)
-
-7. [Environment Setup](#7-environment-setup)
-
-8. [Verify Java and Hadoop](#8-verify-java-and-hadoop)
-
-9. [Dataset Information](#9-dataset-information)
-
-10. [Build the Java MapReduce Program](#10-build-the-java-mapreduce-program)
-
-11. [Run the Project Locally](#11-run-the-project-locally)
-
-12. [Understand the Output](#12-understand-the-output)
-
-13. [Analyze the Full Dataset](#13-analyze-the-full-dataset)
-
-14. [Generate Visualizations](#14-generate-visualizations)
-
-15. [Apache Hadoop Configuration](#15-apache-hadoop-configuration)
-
-16. [Amazon S3 Integration](#16-amazon-s3-integration)
-
-17. [Run MapReduce Using Data Stored in S3](#17-run-mapreduce-using-data-stored-in-s3)
-
-18. [View and Download Results from S3](#18-view-and-download-results-from-s3)
-
-19. [AWS Security Best Practices](#19-aws-security-best-practices)
-
-20. [Troubleshooting](#20-troubleshooting)
-
-21. [Future Improvements](#21-future-improvements)
-
-22. [Conclusion](#22-conclusion)
-
-23. [Upload the Project to GitHub](#23-upload-the-project-to-github)
 
 ## 1. Project Overview
 
@@ -94,7 +47,9 @@ Amazon S3 integration allows the MapReduce program to read input logs from an S3
 
 | AWS region | `eu-north-1` |
 
-| Python visualization | Python with Matplotlib |
+| Python visualization | Python, Pandas, Plotly, and Matplotlib |
+
+| Interactive dashboard | Streamlit |
 
 | Version control | Git and GitHub |
 
@@ -158,7 +113,15 @@ Python is used to generate visualizations from the analysis results.
 
 Matplotlib provides chart-generation functionality for the project's analysis results.
 
-### 3.7 Git and GitHub
+### 3.7 Streamlit Dashboard
+
+Streamlit powers the interactive web dashboard used to explore the Hadoop log-analysis results through a browser. The dashboard is implemented in `dashboard/app.py` and runs locally at `http://localhost:8501` when started on the development machine.
+
+### 3.8 Pandas and Plotly
+
+Pandas loads and organizes the reducer output and summary data into tables. Plotly creates interactive charts, including bar charts and distribution charts, for HTTP status codes and request methods.
+
+### 3.9 Git and GitHub
 
 Git tracks changes to the project, while GitHub hosts the repository.
 
@@ -180,7 +143,13 @@ Before running the project, ensure that the following software is available.
 
 | Visual Studio Code | Editing project files |
 
-| Python 3 | Running visualization scripts |
+| Python 3 | Running visualization scripts and the dashboard |
+
+| Streamlit | Running the interactive dashboard |
+
+| Pandas | Loading and preparing analysis tables |
+
+| Plotly | Interactive charts in the dashboard |
 
 | Git | Version control |
 
@@ -272,9 +241,11 @@ web-server-log-analysis/
 
 | `graphs/` | Generated visualization images |
 
-| `generate_graphs.py` | Python visualization script |
+| `generate_graphs.py` | Python script for generating static visualization images, if used |
 
-| `requirements.txt` | Python dependency list |
+| `dashboard/app.py` | Streamlit dashboard with six interactive views |
+
+| `requirements.txt` | Python dependencies, including Streamlit, Pandas, and Plotly |
 
 | `ANALYSIS_REPORT.md` | Detailed analysis report |
 
@@ -1108,7 +1079,108 @@ Charts can make the following patterns easier to understand:
 
 The charts depend on the data and input files used by the visualization script.
 
-## 15. Apache Hadoop Configuration
+## 15. Interactive Streamlit Dashboard
+
+The project includes an interactive web dashboard built with **Streamlit**, **Pandas**, and **Plotly**. The dashboard is implemented in `dashboard/app.py` and is currently running in the local development environment.
+
+The dashboard presents the Hadoop web-server-log analysis in a browser-friendly interface. It complements the Java MapReduce program; it does not replace the Hadoop processing step.
+
+### 15.1 Dashboard Pages
+
+The sidebar provides navigation between six views:
+
+1. **Executive Dashboard** — an at-a-glance overview with processing metrics, HTTP response charts, status-category distribution, and request-method summaries.
+2. **HTTP Status Codes** — charts and a table for response-code counts, category filtering, and CSV download of the displayed status summary.
+3. **Request Methods** — interactive charts and a table summarizing HTTP methods, with a CSV download option.
+4. **Hadoop Pipeline & S3** — a visual explanation of the input, Map, Shuffle and Sort, Reduce, output, and visualization stages, together with recorded run metrics and S3 input/output paths.
+5. **Dataset Information** — information about the Calgary access log, the analysis goals, output files, and recorded processing statistics.
+6. **Data Explorer** — a searchable table for the local Hadoop reducer output, with filtered CSV download and a preview of raw output lines.
+
+### 15.2 Dashboard Features
+
+- KPI cards for input records, Map output records, reducer output records, and malformed or unparsed lines.
+- Interactive Plotly bar charts and distribution charts.
+- Status-code category labels for successful responses, redirects, client errors, server errors, and other codes.
+- Sidebar navigation between the six dashboard views.
+- Data tables for the displayed status and request-method summaries.
+- CSV download buttons for status summaries, method summaries, and filtered reducer output.
+- A check that indicates whether the local reducer output file has been found.
+
+### 15.3 Data Source and Interpretation
+
+The dashboard looks for the reducer output at:
+
+```text
+results/part-r-00000
+```
+
+When this file is present, the Data Explorer loads its rows for searching, inspection, and download. The dashboard also attempts to detect status-code and method aggregates from the reducer keys.
+
+If the expected aggregates cannot be detected from the local reducer output, the dashboard displays previously recorded reference figures instead. These reference figures are explicitly identified in the interface and should be treated as provisional until reconciled with the actual reducer output. In particular, the recorded status-code figures do not reconcile with the recorded input-record total, so they should not be reported as a fully reconciled result.
+
+The dashboard displays recorded pipeline figures of 726,739 input records, 2,166,993 Map output records, 11,807 reducer output records, and 4,408 malformed or unparsed lines. These are recorded project figures shown by the dashboard; verify them against the actual Hadoop job logs and reducer output before treating them as independently revalidated counters.
+
+### 15.4 Install Dashboard Dependencies
+
+From the project root, activate the project's virtual environment and install the dependencies listed in `requirements.txt`:
+
+```bash
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+```
+
+The `requirements.txt` file should include the dashboard dependencies:
+
+```text
+streamlit
+pandas
+plotly
+```
+
+If the environment has not yet been created, create and activate one before installing packages:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+```
+
+### 15.5 Run the Dashboard
+
+From the repository root, run:
+
+```bash
+source .venv/bin/activate
+streamlit run dashboard/app.py
+```
+
+Streamlit normally opens the dashboard in a browser. The local address is:
+
+```text
+http://localhost:8501
+```
+
+If the browser does not open automatically, copy that address into your browser while the Streamlit process is still running. To stop the local dashboard, return to the terminal and press `Ctrl+C`.
+
+The address `http://localhost:8501` is a local development address. It does not mean the dashboard is publicly deployed on the internet.
+
+### 15.6 Refresh the Dashboard with New Hadoop Results
+
+After a successful MapReduce run, make sure the actual reducer output is copied or downloaded to `results/part-r-00000`. Then refresh the dashboard page in the browser. If the output is missing, the dashboard displays a warning on the sidebar and in the Data Explorer page.
+
+The dashboard does not itself execute the Hadoop job or fetch new S3 output automatically; run the MapReduce job and place its output at the expected local path before refreshing the dashboard.
+
+### 15.7 Dashboard Dependencies
+
+The dashboard uses:
+
+- **Streamlit** for the browser-based application and page navigation.
+- **Pandas** for loading, filtering, and tabulating results.
+- **Plotly Express** for interactive charts.
+
+The dashboard source code is maintained in `dashboard/app.py`.
+
+## 16. Apache Hadoop Configuration
 
 Hadoop uses configuration files to determine how jobs run and how filesystem paths are accessed.
 
@@ -1120,7 +1192,7 @@ The configuration directory in this project is:
 
 ```
 
-### 15.1 `core-site.xml`
+### 16.1 `core-site.xml`
 
 File:
 
@@ -1178,7 +1250,7 @@ The environment-variable credential provider allows the S3A filesystem to use AW
 
 **Security note:** Never put AWS access keys or secret access keys directly in a public configuration file or GitHub repository.
 
-### 15.2 `mapred-site.xml`
+### 16.2 `mapred-site.xml`
 
 File:
 
@@ -1204,7 +1276,7 @@ The project uses local MapReduce execution mode:
 
 This setting allows Hadoop to execute MapReduce jobs locally.
 
-### 15.3 S3A Connector
+### 16.3 S3A Connector
 
 The Hadoop S3A connector and AWS SDK dependencies must be available for Hadoop to read and write S3 paths.
 
@@ -1222,11 +1294,11 @@ The project also enables the optional Hadoop AWS tools through its Hadoop enviro
 
 If the connector is missing, incompatible, or unavailable on the Hadoop classpath, S3A operations may fail.
 
-## 16. Amazon S3 Integration
+## 17. Amazon S3 Integration
 
 Amazon S3 is used to store the project's input files and MapReduce results.
 
-### 16.1 S3 Configuration
+### 17.1 S3 Configuration
 
 The tested project configuration is:
 
@@ -1246,7 +1318,7 @@ The tested project configuration is:
 
 | Execution mode | Local MapReduce |
 
-### 16.2 S3 Bucket Structure
+### 17.2 S3 Bucket Structure
 
 The bucket contains input files and output directories.
 
@@ -1284,7 +1356,7 @@ The exact contents may change as more input files and outputs are added.
 
 S3 does not have conventional directories in the same way as a local filesystem. Paths such as `input/` and `output/` generally represent prefixes in object keys.
 
-### 16.3 Install or Verify AWS CLI
+### 17.3 Install or Verify AWS CLI
 
 Check whether the AWS CLI is installed:
 
@@ -1296,7 +1368,7 @@ aws --version
 
 If it is installed, the command displays the installed version.
 
-### 16.4 Configure AWS CLI
+### 17.4 Configure AWS CLI
 
 If AWS CLI has not been configured, run:
 
@@ -1320,7 +1392,7 @@ Do not paste credentials into project documentation, source code, chat messages,
 
 If AWS CLI is already configured, do not run this step unnecessarily.
 
-### 16.5 Verify AWS Authentication
+### 17.5 Verify AWS Authentication
 
 Run:
 
@@ -1332,7 +1404,7 @@ aws sts get-caller-identity
 
 A successful response confirms that AWS CLI can authenticate using the configured credentials.
 
-### 16.6 Verify the S3 Bucket
+### 17.6 Verify the S3 Bucket
 
 Run:
 
@@ -1358,7 +1430,7 @@ aws s3 ls s3://bda-web-log-analysis-rohitsasmal-2026/output/ --recursive
 
 ```
 
-### 16.7 Provide Credentials to Hadoop
+### 17.7 Provide Credentials to Hadoop
 
 The tested S3A configuration uses environment variables for AWS authentication.
 
@@ -1388,7 +1460,7 @@ If you open a new terminal, you may need to export the variables again.
 
 Never run commands that print the secret access key when sharing terminal output.
 
-### 16.8 Verify S3A Access Through Hadoop
+### 17.8 Verify S3A Access Through Hadoop
 
 Run:
 
@@ -1402,11 +1474,11 @@ A successful response lists objects under the input prefix.
 
 If this command fails, verify the AWS credentials, region, S3 permissions, Hadoop configuration, and S3A connector dependencies before running the MapReduce job.
 
-## 17. Run MapReduce Using Data Stored in S3
+## 18. Run MapReduce Using Data Stored in S3
 
 The project has successfully executed its Java MapReduce program against the sample access log stored in Amazon S3.
 
-### 17.1 Verify the Project and Build
+### 18.1 Verify the Project and Build
 
 Run:
 
@@ -1426,7 +1498,7 @@ ls -lh build/WebServerLogAnalysis.jar
 
 If the Java source has changed since the JAR was built, rebuild the JAR using the instructions in Section 10.
 
-### 17.2 Export AWS Credentials
+### 18.2 Export AWS Credentials
 
 Run:
 
@@ -1438,7 +1510,7 @@ export AWS_SECRET_ACCESS_KEY="$(aws configure get aws_secret_access_key)"
 
 ```
 
-### 17.3 Execute the MapReduce Job
+### 18.3 Execute the MapReduce Job
 
 The tested sample input is:
 
@@ -1468,7 +1540,7 @@ The command uses:
 
 **Important:** Hadoop generally cannot write to an output path that already contains the output of a previous job. Use a new output prefix for each run, or carefully remove the previous output only when it is no longer needed.
 
-### 17.4 Verify the Job Output
+### 18.4 Verify the Job Output
 
 Run:
 
@@ -1492,7 +1564,7 @@ The `_SUCCESS` marker indicates that the MapReduce job completed successfully.
 
 The `part-r-00000` file contains the reducer output.
 
-### 17.5 Confirmed Sample Test Results
+### 18.5 Confirmed Sample Test Results
 
 The sample test processed 10 input records.
 
@@ -1540,11 +1612,11 @@ These are the verified results of the small S3 sample test.
 
 **The successful sample test does not mean that the full Calgary dataset has already been processed through S3.** The full Calgary dataset results documented in Section 13 came from the earlier local analysis.
 
-## 18. View and Download Results from S3
+## 19. View and Download Results from S3
 
 After a MapReduce job completes, its results can be inspected using AWS CLI.
 
-### 18.1 List the Output
+### 19.1 List the Output
 
 Run:
 
@@ -1554,7 +1626,7 @@ aws s3 ls s3://bda-web-log-analysis-rohitsasmal-2026/output/README-test-run-001/
 
 ```
 
-### 18.2 Display the Results Without Downloading Them Permanently
+### 19.2 Display the Results Without Downloading Them Permanently
 
 Run:
 
@@ -1566,7 +1638,7 @@ aws s3 cp s3://bda-web-log-analysis-rohitsasmal-2026/output/README-test-run-001/
 
 The final `-` tells AWS CLI to write the downloaded object to standard output.
 
-### 18.3 Download the Results to the Project
+### 19.3 Download the Results to the Project
 
 Run:
 
@@ -1594,7 +1666,7 @@ cat results/s3-output/part-r-00000
 
 The downloaded output can be used for further inspection or analysis.
 
-### 18.4 Download All Objects from an Output Prefix
+### 19.4 Download All Objects from an Output Prefix
 
 If an output directory contains multiple part files, download the prefix recursively:
 
@@ -1606,7 +1678,7 @@ aws s3 cp s3://bda-web-log-analysis-rohitsasmal-2026/output/README-test-run-001/
 
 This copies the objects under that prefix to the local destination.
 
-## 19. AWS Security Best Practices
+## 20. AWS Security Best Practices
 
 AWS credentials provide access to cloud resources and must be protected.
 
@@ -1636,11 +1708,11 @@ The project uses the AWS CLI credential configuration together with environment 
 
 The `.aws` configuration directory should remain outside the Git repository.
 
-## 20. Troubleshooting
+## 21. Troubleshooting
 
 This section covers common issues that may occur when building or running the project.
 
-### 20.1 `hadoop: command not found`
+### 21.1 `hadoop: command not found`
 
 **Possible cause:** Hadoop is not installed correctly or its `bin` directory is missing from `PATH`.
 
@@ -1670,7 +1742,7 @@ hadoop version
 
 ```
 
-### 20.2 `javac: command not found`
+### 21.2 `javac: command not found`
 
 **Possible cause:** The Java development kit is missing or not configured correctly.
 
@@ -1686,7 +1758,7 @@ javac -version
 
 Java runtime availability alone does not guarantee that the Java compiler is available.
 
-### 20.3 JAR File Not Found
+### 21.3 JAR File Not Found
 
 **Possible cause:** The JAR has not been built, or the command is being run from the wrong directory.
 
@@ -1702,7 +1774,7 @@ ls -lh build/WebServerLogAnalysis.jar
 
 If the JAR is missing, follow Section 10 to compile the source and build the JAR.
 
-### 20.4 Output Directory Already Exists
+### 21.4 Output Directory Already Exists
 
 **Possible cause:** Hadoop is trying to write to a path that already contains output from an earlier run.
 
@@ -1716,7 +1788,7 @@ s3a://bda-web-log-analysis-rohitsasmal-2026/output/test-run-002
 
 Make sure the chosen path is new before running the job.
 
-### 20.5 `NoAuthWithAWSException`
+### 21.5 `NoAuthWithAWSException`
 
 **Possible cause:** Hadoop S3A cannot obtain valid AWS credentials.
 
@@ -1750,7 +1822,7 @@ test -n "$AWS_SECRET_ACCESS_KEY" && echo "Secret key is set"
 
 Then retry the S3A listing command.
 
-### 20.6 S3 Access Denied
+### 21.6 S3 Access Denied
 
 **Possible cause:** The authenticated AWS identity does not have sufficient permissions for the requested operation.
 
@@ -1766,7 +1838,7 @@ Verify the applicable IAM policies and bucket policies.
 
 Remember that listing, reading, writing, and deleting objects can require different permissions.
 
-### 20.7 S3A Filesystem or Classpath Errors
+### 21.7 S3A Filesystem or Classpath Errors
 
 **Possible cause:** Hadoop cannot load the required S3A connector or a compatible AWS SDK dependency.
 
@@ -1786,7 +1858,7 @@ ls "$HADOOP_HOME/share/hadoop/tools/lib/aws-java-sdk-bundle-1.12.367.jar"
 
 If either library is missing, or a version mismatch is reported, investigate the Hadoop and AWS SDK compatibility before changing dependencies.
 
-### 20.8 Resource Manager or YARN Errors
+### 21.8 Resource Manager or YARN Errors
 
 **Possible cause:** Hadoop is attempting to submit a job to YARN instead of using local execution mode.
 
@@ -1814,7 +1886,7 @@ The project uses:
 
 Make sure this property is inside the `\<configuration>` element.
 
-### 20.9 Invalid or Unparsed Log Records
+### 21.9 Invalid or Unparsed Log Records
 
 **Possible cause:** Some records do not match the format expected by the Java parser.
 
@@ -1828,7 +1900,7 @@ src/WebServerLogAnalysis.java
 
 Do not assume that every line in an access log will be counted as a valid parsed record.
 
-### 20.10 Python Dependency Errors
+### 21.10 Python Dependency Errors
 
 **Possible cause:** Python packages are missing or installed in a different environment.
 
@@ -1842,7 +1914,7 @@ python3 -m pip install -r requirements.txt
 
 If a virtual environment is being used, activate it before running the visualization script.
 
-## 21. Future Improvements
+## 22. Future Improvements
 
 Possible future improvements include:
 
@@ -1876,7 +1948,7 @@ Possible future improvements include:
 
 These are potential improvements and should not be considered completed features unless they have been implemented and tested.
 
-## 22. Conclusion
+## 23. Conclusion
 
 The Web Server Log Analysis project demonstrates how Java and Hadoop MapReduce can be used to extract useful statistics from web server access logs.
 
@@ -1888,138 +1960,3 @@ The small S3 sample test completed successfully, demonstrating that the configur
 
 The project provides a practical foundation for learning big-data processing, MapReduce, cloud storage integration, data analysis, and version control.
 
-## 23. Upload the Project to GitHub
-
-The project repository is:
-
-**GitHub repository:** https\://github.com/sasmalrohit2004/web-server-log-analysis
-
-Git is used to track changes, while GitHub hosts the project remotely.
-
-### 23.1 Check Git
-
-Run:
-
-```bash
-
-git --version
-
-```
-
-### 23.2 Enter the Project Directory
-
-```bash
-
-cd \~/web-server-log-analysis
-
-```
-
-### 23.3 Check the Repository Status
-
-```bash
-
-git status
-
-```
-
-### 23.4 Review the Changes
-
-To see the differences in tracked files:
-
-```bash
-
-git diff
-
-```
-
-To check for whitespace errors:
-
-```bash
-
-git diff --check
-
-```
-
-### 23.5 Check the README
-
-Confirm that the complete README has been saved:
-
-```bash
-
-head -n 30 README.md
-
-```
-
-Check its length:
-
-```bash
-
-wc -l README.md
-
-```
-
-### 23.6 Stage the README
-
-To stage only the README change:
-
-```bash
-
-git add README.md
-
-```
-
-If you have made other project changes that should also be included, inspect them carefully before staging.
-
-### 23.7 Commit the Changes
-
-```bash
-
-git commit -m "Improve project documentation and S3 integration guide"
-
-```
-
-If Git reports that there is nothing to commit, check whether the file was changed and saved.
-
-### 23.8 Push to GitHub
-
-```bash
-
-git push origin main
-
-```
-
-### 23.9 Verify the Update
-
-Open the GitHub repository and check that the new README appears correctly.
-
-Ensure that the headings, tables, code blocks, and table of contents render properly.
-
-### 23.10 Important Git Security Checks
-
-Before pushing, make sure that:
-
-- AWS credentials are not included.
-
-- Private configuration files are not accidentally staged.
-
-- Large datasets are handled according to the project's `.gitignore` rules.
-
-- Generated build files are included or excluded intentionally.
-
-- No sensitive information is committed.
-
-You can inspect staged files before committing:
-
-```bash
-
-git status --short
-
-```
-
-To inspect the files staged for commit:
-
-```bash
-
-git diff --cached --stat
-
-```
